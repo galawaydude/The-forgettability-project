@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Review: {{ item.title }}{% endblock %}
+
+{% block content %}
+<div class="review-container">
+    <div class="review-header">
+        <h1>{{ item.title }}</h1>
+        <div class="badges">
+            <span class="badge badge-{% if item.item_type == 'Q' %}primary{% else %}secondary{% endif %}">
+                {{ item.get_item_type_display }}
+            </span>
+            <span class="badge badge-{% if item.difficulty == 'E' %}success{% elif item.difficulty == 'M' %}warning{% else %}danger{% endif %}">
+                {{ item.get_difficulty_display }}
+            </span>
+        </div>
+    </div>
+
+    <div class="content-section">
+        <div class="item-details">
+            <!-- Description -->
+            <div class="detail-card">
+                <h3>Description</h3>
+                <p>{{ item.description }}</p>
+            </div>
+
+            <!-- Question specific content -->
+            {% if item.item_type == 'Q' %}
+                {% if item.question_link %}
+                    <div class="detail-card">
+                        <h3>Question Link</h3>
+                        <a href="{{ item.question_link }}" target="_blank" class="btn btn-link">
+                            Open Question <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    </div>
+                {% endif %}
+
+                {% if item.question_image %}
+                    <div class="detail-card">
+                        <h3>Question Image</h3>
+                        <img src="{{ item.question_image.url }}" alt="Question Image" class="question-image">
+                    </div>
+                {% endif %}
+            {% endif %}
+
+            <!-- References -->
+            {% if item.references %}
+                <div class="detail-card">
+                    <h3>References & Notes</h3>
+                    <p>{{ item.references|linebreaks }}</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Review Form -->
+        <div class="review-form-section">
+            <h2>Complete Review</h2>
+            <form method="POST" class="review-form">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label>How well did you remember this?</label>
+                    <div class="rating-buttons">
+                        <input type="radio" name="performance_rating" id="rating1" value="1" required>
+                        <label for="rating1" class="rating-btn">1<span>Poor</span></label>
+                        
+                        <input type="radio" name="performance_rating" id="rating2" value="2">
+                        <label for="rating2" class="rating-btn">2<span>Fair</span></label>
+                        
+                        <input type="radio" name="performance_rating" id="rating3" value="3">
+                        <label for="rating3" class="rating-btn">3<span>Good</span></label>
+                        
+                        <input type="radio" name="performance_rating" id="rating4" value="4">
+                        <label for="rating4" class="rating-btn">4<span>Very Good</span></label>
+                        
+                        <input type="radio" name="performance_rating" id="rating5" value="5">
+                        <label for="rating5" class="rating-btn">5<span>Perfect</span></label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Review Notes (Optional)</label>
+                    <textarea id="notes" name="notes" class="form-control" 
+                              rows="3" placeholder="Add any notes about your review..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Complete Review</button>
+                    <a href="{% url 'core:dashboard' %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.review-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.badges {
+    display: flex;
+    gap: 10px;
+}
+
+.content-section {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 30px;
+}
+
+.detail-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.question-image {
+    max-width: 100%;
+    border-radius: 4px;
+}
+
+.review-form-section {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 20px;
+    align-self: start;
+}
+
+.rating-buttons {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.rating-buttons input[type="radio"] {
+    display: none;
+}
+
+.rating-btn {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.rating-btn span {
+    font-size: 0.8em;
+    color: #666;
+}
+
+.rating-buttons input[type="radio"]:checked + .rating-btn {
+    border-color: #007bff;
+    background: #f8f9ff;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .content-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .review-form-section {
+        position: static;
+    }
+}
+</style>
+{% endblock %}

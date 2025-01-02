@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete {{ item.title }}{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="delete-card">
+        <div class="warning-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        
+        <h2>Delete Confirmation</h2>
+        
+        <p class="warning-text">
+            Are you sure you want to delete "<strong>{{ item.title }}</strong>"?
+        </p>
+        
+        <p class="details">
+            This will permanently delete:
+            <ul>
+                <li>The item details and description</li>
+                <li>All review history ({{ item.review_set.count }} reviews)</li>
+                <li>Any associated files or images</li>
+            </ul>
+        </p>
+        
+        <div class="action-buttons">
+            <form method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                <a href="{% url 'core:item_detail' item.pk %}" class="btn btn-secondary">No, Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.delete-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.delete-card {
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+}
+
+.warning-icon {
+    font-size: 48px;
+    color: #dc3545;
+    margin-bottom: 20px;
+}
+
+.warning-text {
+    font-size: 1.2em;
+    margin: 20px 0;
+    color: #2c3e50;
+}
+
+.details {
+    text-align: left;
+    margin: 20px 0;
+}
+
+.details ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.action-buttons {
+    margin-top: 30px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+</style>
+{% endblock %}

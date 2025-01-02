@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <div class="profile-header">
+        <h1>Your Profile</h1>
+        <p class="text-muted">Manage your account settings and view your statistics</p>
+    </div>
+
+    <div class="profile-grid">
+        <!-- Profile Information -->
+        <div class="profile-card">
+            <h2>Profile Information</h2>
+            <form method="POST" class="profile-form">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="first_name">First Name</label>
+                    <input type="text" id="first_name" name="first_name" 
+                           value="{{ user.first_name }}" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="last_name">Last Name</label>
+                    <input type="text" id="last_name" name="last_name" 
+                           value="{{ user.last_name }}" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" 
+                           value="{{ user.email }}" class="form-control" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Update Profile</button>
+            </form>
+        </div>
+
+        <!-- Change Password -->
+        <div class="profile-card">
+            <h2>Change Password</h2>
+            <form method="POST" class="password-form">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="current_password">Current Password</label>
+                    <input type="password" id="current_password" name="current_password" 
+                           class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="new_password">New Password</label>
+                    <input type="password" id="new_password" name="new_password" 
+                           class="form-control">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Change Password</button>
+            </form>
+        </div>
+
+        <!-- Statistics -->
+        <div class="profile-card stats-card">
+            <h2>Your Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">{{ total_items }}</div>
+                    <div class="stat-label">Total Items</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ total_reviews }}</div>
+                    <div class="stat-label">Total Reviews</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ avg_rating|default:0|floatformat:1 }}</div>
+                    <div class="stat-label">Average Rating</div>
+                </div>
+            </div>
+            <div class="account-info">
+                <p><strong>Member since:</strong> {{ join_date|date:"M d, Y" }}</p>
+                <p><strong>Last login:</strong> {{ last_login|date:"M d, Y H:i" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.profile-page {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.profile-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.profile-card h2 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stat-value {
+    font-size: 2em;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+.account-info {
+    border-top: 1px solid #eee;
+    margin-top: 20px;
+    padding-top: 20px;
+}
+
+.account-info p {
+    margin: 5px 0;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

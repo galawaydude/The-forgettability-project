@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Items{% endblock %}
+
+{% block content %}
+<div class="search-page">
+    <div class="search-container">
+        <h1>Search Learning Items</h1>
+
+        <!-- Search Form -->
+        <form method="GET" class="search-form">
+            <div class="search-grid">
+                <!-- Main Search -->
+                <div class="search-main">
+                    <div class="input-group">
+                        {{ form.query }}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters-section">
+                    <div class="filter-group">
+                        <label>Item Type</label>
+                        {{ form.item_type }}
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Difficulty</label>
+                        <div class="difficulty-options">
+                            {{ form.difficulty }}
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Sort By</label>
+                        {{ form.sort_by }}
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="checkbox-label">
+                            {{ form.needs_review }}
+                            <span>Show only items that need review</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- Results -->
+        <div class="results-section">
+            <div class="results-header">
+                <h2>Results ({{ total_results }})</h2>
+                {% if request.GET %}
+                    <a href="{% url 'core:search' %}" class="btn btn-outline-secondary">
+                        Clear Filters
+                    </a>
+                {% endif %}
+            </div>
+
+            {% if items %}
+                <div class="items-grid">
+                    {% for item in items %}
+                        <div class="item-card">
+                            <div class="card-header">
+                                <h3>{{ item.title }}</h3>
+                                <div class="badges">
+                                    <span class="badge badge-{% if item.item_type == 'Q' %}primary{% else %}secondary{% endif %}">
+                                        {{ item.get_item_type_display }}
+                                    </span>
+                                    <span class="badge badge-{% if item.difficulty == 'E' %}success{% elif item.difficulty == 'M' %}warning{% else %}danger{% endif %}">
+                                        {{ item.get_difficulty_display }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+                                <p>{{ item.description|truncatewords:30 }}</p>
+                            </div>
+
+                            <div class="card-footer">
+                                <div class="review-info">
+                                    {% if item.last_review %}
+                                        <small>Last reviewed: {{ item.last_review|date:"M d, Y" }}</small>
+                                    {% else %}
+                                        <small>Never reviewed</small>
+                                    {% endif %}
+                                </div>
+                                <div class="action-buttons">
+                                    <a href="{% url 'core:item_detail' item.pk %}" class="btn btn-sm btn-secondary">
+                                        View
+                                    </a>
+                                    <a href="{% url 'core:review_item' item.pk %}" class="btn btn-sm btn-primary">
+                                        Review
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-search fa-3x"></i>
+                    <p>No items found matching your criteria</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.search-page {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.search-container h1 {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.search-form {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.search-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.search-main .input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.filters-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.filter-group label {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.difficulty-options {
+    display: flex;
+    gap: 15px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.item-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+}
+
+.badges {
+    display: flex;
+    gap: 5px;
+}
+
+.card-body {
+    padding: 15px;
+}
+
+.card-footer {
+    padding: 15px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.empty-state i {
+    margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+    .filters-section {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

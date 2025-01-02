@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ item.title }}{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <div class="detail-header">
+        <div class="title-section">
+            <h1>{{ item.title }}</h1>
+            <div class="badges">
+                <span class="badge badge-{% if item.item_type == 'Q' %}primary{% else %}secondary{% endif %}">
+                    {{ item.get_item_type_display }}
+                </span>
+                <span class="badge badge-{% if item.difficulty == 'E' %}success{% elif item.difficulty == 'M' %}warning{% else %}danger{% endif %}">
+                    {{ item.get_difficulty_display }}
+                </span>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="{% url 'core:review_item' item.pk %}" class="btn btn-primary">Review Now</a>
+            <button class="btn btn-secondary" onclick="history.back()">Go Back</button>
+        </div>
+    </div>
+
+    <div class="content-grid">
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="detail-card">
+                <h3>Description</h3>
+                <p>{{ item.description|linebreaks }}</p>
+            </div>
+
+            {% if item.item_type == 'Q' %}
+                {% if item.question_link %}
+                    <div class="detail-card">
+                        <h3>Question Link</h3>
+                        <a href="{{ item.question_link }}" target="_blank" class="btn btn-link">
+                            Open Question <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    </div>
+                {% endif %}
+
+                {% if item.question_image %}
+                    <div class="detail-card">
+                        <h3>Question Image</h3>
+                        <img src="{{ item.question_image.url }}" alt="Question Image" class="question-image">
+                    </div>
+                {% endif %}
+            {% endif %}
+
+            {% if item.references %}
+                <div class="detail-card">
+                    <h3>References & Notes</h3>
+                    <p>{{ item.references|linebreaks }}</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="detail-card">
+                <h3>Learning Progress</h3>
+                <div class="progress-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Reviews Completed</span>
+                        <span class="stat-value">{{ item.review_count }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Added On</span>
+                        <span class="stat-value">{{ item.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Last Review</span>
+                        <span class="stat-value">{{ item.last_review|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Next Review</span>
+                        <span class="stat-value">{{ item.calculate_next_review|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-card">
+                <h3>Recent Reviews</h3>
+                {% with recent_reviews=item.review_set.all|slice:":5" %}
+                    {% if recent_reviews %}
+                        <div class="review-list">
+                            {% for review in recent_reviews %}
+                                <div class="review-item">
+                                    <div class="review-header">
+                                        <span class="review-date">{{ review.review_date|date:"M d, Y" }}</span>
+                                        <span class="review-rating">Rating: {{ review.performance_rating }}/5</span>
+                                    </div>
+                                    {% if review.notes %}
+                                        <p class="review-notes">{{ review.notes }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No reviews yet</p>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 30px;
+}
+
+.title-section {
+    flex: 1;
+}
+
+.badges {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+}
+
+.detail-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.question-image {
+    max-width: 100%;
+    border-radius: 4px;
+}
+
+.progress-stats {
+    display: grid;
+    gap: 15px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    color: #666;
+}
+
+.review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.review-item {
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.review-notes {
+    color: #666;
+    font-size: 0.9em;
+    margin: 5px 0 0 0;
+}
+
+@media (max-width: 768px) {
+    .detail-header {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

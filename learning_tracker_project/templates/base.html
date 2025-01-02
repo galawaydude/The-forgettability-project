@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Tracker - {% block title %}{% endblock %}</title>
+    
+    <!-- Magic UI CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@magic-ui/css@latest/dist/magic.min.css">
+    
+    <!-- Custom CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        {% if user.is_authenticated %}
+            <a href="{% url 'core:dashboard' %}" class="nav-link">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+            <a href="{% url 'core:add_item' %}" class="nav-link">
+                <i class="fas fa-plus"></i> Add Item
+            </a>
+            <a href="{% url 'core:search' %}" class="nav-link">
+                <i class="fas fa-search"></i> Search
+            </a>
+            <a href="{% url 'core:stats' %}" class="nav-link">
+                <i class="fas fa-chart-bar"></i> Statistics
+            </a>
+            <div class="nav-right">
+                <a href="{% url 'core:profile' %}" class="nav-link">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+                <a href="{% url 'core:logout' %}" class="nav-link">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        {% else %}
+            <a href="{% url 'core:login' %}" class="nav-link">Login</a>
+            <a href="{% url 'core:register' %}" class="nav-link">Register</a>
+        {% endif %}
+    </nav>
+
+    <main class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Magic UI JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@magic-ui/js@latest/dist/magic.min.js"></script>
+    
+    <!-- Custom JS -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

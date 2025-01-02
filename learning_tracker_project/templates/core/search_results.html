@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <div class="search-header">
+        <h1>Search Results</h1>
+        <p>{% if query %}Results for "{{ query }}"{% endif %}</p>
+    </div>
+
+    <div class="search-form">
+        <form method="GET" action="{% url 'core:search' %}">
+            <div class="input-group">
+                <input type="text" name="q" value="{{ query }}" 
+                       class="form-control" placeholder="Search items...">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </form>
+    </div>
+
+    {% if items %}
+        <div class="items-grid">
+            {% for item in items %}
+                <div class="card">
+                    <div class="card-body">
+                        <div class="card-header">
+                            <h3>{{ item.title }}</h3>
+                            <span class="badge badge-{% if item.item_type == 'Q' %}primary{% else %}secondary{% endif %}">
+                                {{ item.get_item_type_display }}
+                            </span>
+                        </div>
+                        <p class="text-muted">{{ item.description|truncatewords:30 }}</p>
+                        <div class="card-footer">
+                            <span class="badge badge-{% if item.difficulty == 'E' %}success{% elif item.difficulty == 'M' %}warning{% else %}danger{% endif %}">
+                                {{ item.get_difficulty_display }}
+                            </span>
+                            <div class="btn-group">
+                                <a href="{% url 'core:item_detail' item.pk %}" 
+                                   class="btn btn-secondary">View</a>
+                                <a href="{% url 'core:review_item' item.pk %}" 
+                                   class="btn btn-primary">Review</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            {% if query %}
+                <p>No items found matching "{{ query }}"</p>
+            {% else %}
+                <p>Start searching by typing above</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.search-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.search-header {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.search-form {
+    max-width: 600px;
+    margin: 0 auto 40px;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+</style>
+{% endblock %}
