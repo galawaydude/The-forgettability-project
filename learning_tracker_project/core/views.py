@@ -1,94 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from django.utils import timezone
-from .models import LearningItem, Review
-from .forms import UserRegistrationForm, LearningItemForm, ReviewForm
-from datetime import datetime
 from django.db.models import Q
-from .forms import ItemSearchForm
-from django.db.models import Avg
-
-@login_required
-def dashboard(request):
-    # Get items that need review
-    current_time = datetime.now()
-    items = LearningItem.objects.filter(user=request.user)
-    items_to_review = [
-        item for item in items 
-        if item.calculate_next_review() <= current_time
-    ]
-    
-    context = {
-        'items_to_review': items_to_review,
-        'recent_items': items.order_by('-created_at')[:5],
-        'total_items': items.count(),
-        'review_count': Review.objects.filter(
-            learning_item__user=request.user
-        ).count(),
-    }
-    return render(request, 'core/dashboard.html', context)
-
-@login_required
-def add_item(request):
-    if request.method == 'POST':
-        form = LearningItemForm(request.POST, request.FILES)
-        if form.is_valid():
-            item = form.save(commit=False)
-            item.user = request.user
-            item.save()
-            messages.success(request, 'Item added successfully!')
-            return redirect('core:dashboard')
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        form = LearningItemForm()
-    return render(request, 'core/add_item.html', {'form': form})
-
-@login_required
-def item_detail(request, pk):
-    item = get_object_or_404(LearningItem, pk=pk, user=request.user)
-    reviews = item.review_set.all().order_by('-review_date')[:5]
-    next_review = item.calculate_next_review()
-    
-    context = {
-        'item': item,
-        'reviews': reviews,
-        'next_review': next_review,
-        'review_count': item.review_set.count(),
-    }
-    return render(request, 'core/item_detail.html', context)
-
-@login_required
-def review_item(request, pk):
-    item = get_object_or_404(LearningItem, pk=pk, user=request.user)
-    if request.method == 'POST':
-        form = ReviewForm(request.POST)
-        if form.is_valid():
-            review = form.save(commit=False)
-            review.learning_item = item
-            review.save()
-            
-            # Update item's review count and last review date
-            item.review_count += 1
-            item.last_review = datetime.now()
-            item.save()
-            
-            messages.success(request, 'Review completed successfully!')
-            return redirect('core:dashboard')
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        form = ReviewForm()
-    
-    context = {
-        'item': item,
-        'form': form,
-        'review_count': item.review_set.count(),
-        'last_review': item.last_review,
-    }
-    return render(request, 'core/review_item.html', context)
+from .models import LearningItem, Review
+from .forms import LearningItemForm, ReviewForm
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.forms import UserCreationForm
 
 def login_view(request):
     if request.method == 'POST':
@@ -105,80 +23,152 @@ def login_view(request):
 
 def register_view(request):
     if request.method == 'POST':
-        form = UserRegistrationForm(request.POST)
+        form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
-            messages.success(request, 'Registration successful! Welcome aboard!')
+            messages.success(request, 'Registration successful!')
             return redirect('core:dashboard')
         else:
-            messages.error(request, 'Please correct the errors below.')
+            messages.error(request, 'Registration failed. Please correct the errors.')
     else:
-        form = UserRegistrationForm()
+        form = UserCreationForm()
     return render(request, 'core/register.html', {'form': form})
 
-@login_required
 def logout_view(request):
     logout(request)
     messages.info(request, 'You have been logged out.')
     return redirect('core:login')
 
 @login_required
-def search_items(request):
-    form = ItemSearchForm(request.GET)
+def dashboard(request):
+    # Get all items for the current user
     items = LearningItem.objects.filter(user=request.user)
+    current_time = timezone.now()
     
-    if form.is_valid():
-        # Text search
-        query = form.cleaned_data.get('query')
-        if query:
-            items = items.filter(
-                Q(title__icontains=query) | 
-                Q(description__icontains=query)
-            )
-        
-        # Type filter
-        item_type = form.cleaned_data.get('item_type')
-        if item_type:
-            items = items.filter(item_type=item_type)
-        
-        # Difficulty filter
-        difficulties = form.cleaned_data.get('difficulty')
-        if difficulties:
-            items = items.filter(difficulty__in=difficulties)
-        
-        # Needs review filter
-        if form.cleaned_data.get('needs_review'):
-            current_time = timezone.now()
-            items = [item for item in items if item.calculate_next_review() <= current_time]
-        
-        # Sorting
-        sort_by = form.cleaned_data.get('sort_by')
-        if sort_by:
-            items = items.order_by(sort_by)
+    # Initialize lists for different categories
+    overdue_items = []
+    due_today_items = []
+    upcoming_items = []
     
-    return render(request, 'core/search.html', {
-        'form': form,
-        'items': items,
-        'total_results': len(items) if isinstance(items, list) else items.count()
-    })
+    # Categorize items
+    for item in items:
+        next_review = item.calculate_next_review()
+        
+        # Ensure next_review is timezone aware
+        if not next_review.tzinfo:
+            next_review = timezone.make_aware(next_review)
+            
+        if next_review < current_time:
+            overdue_items.append(item)
+        elif next_review.date() == current_time.date():
+            due_today_items.append(item)
+        else:
+            upcoming_items.append(item)
+    
+    context = {
+        'overdue_items': overdue_items,
+        'due_today_items': due_today_items,
+        'upcoming_items': upcoming_items,
+        'total_items': items.count(),
+        'total_reviews': Review.objects.filter(learning_item__user=request.user).count(),
+    }
+    
+    return render(request, 'core/dashboard.html', context)
+
+@login_required
+def add_item(request):
+    if request.method == 'POST':
+        form = LearningItemForm(request.POST)
+        if form.is_valid():
+            item = form.save(commit=False)
+            item.user = request.user
+            item.created_at = timezone.now()  # Add this line to set timezone-aware created_at
+            item.save()
+            messages.success(request, 'Item added successfully!')
+            return redirect('core:dashboard')
+    else:
+        form = LearningItemForm()
+    return render(request, 'core/add_item.html', {'form': form})
+
+@login_required
+def item_detail(request, pk):
+    item = get_object_or_404(LearningItem, pk=pk, user=request.user)
+    reviews = item.review_set.all().order_by('-review_date')
+    next_review = item.calculate_next_review()
+    
+    # Ensure next_review is timezone aware
+    if next_review and not next_review.tzinfo:
+        next_review = timezone.make_aware(next_review)
+    
+    context = {
+        'item': item,
+        'reviews': reviews,
+        'next_review': next_review
+    }
+    return render(request, 'core/item_detail.html', context)
+
+@login_required
+def edit_item(request, pk):
+    item = get_object_or_404(LearningItem, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = LearningItemForm(request.POST, instance=item)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Item updated successfully!')
+            return redirect('core:item_detail', pk=pk)
+    else:
+        form = LearningItemForm(instance=item)
+    return render(request, 'core/edit_item.html', {'form': form, 'item': item})
+
+@login_required
+def delete_item(request, pk):
+    item = get_object_or_404(LearningItem, pk=pk, user=request.user)
+    if request.method == 'POST':
+        item.delete()
+        messages.success(request, 'Item deleted successfully!')
+        return redirect('core:dashboard')
+    return render(request, 'core/delete_confirm.html', {'item': item})
+
+@login_required
+def review_item(request, pk):
+    item = get_object_or_404(LearningItem, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.learning_item = item
+            review.review_date = timezone.now()  # Add this line to set timezone-aware review_date
+            review.save()
+            messages.success(request, 'Review submitted successfully!')
+            return redirect('core:dashboard')
+    else:
+        form = ReviewForm()
+    return render(request, 'core/review_item.html', {'form': form, 'item': item})
+
+@login_required
+def search_items(request):
+    query = request.GET.get('q', '')
+    if query:
+        items = LearningItem.objects.filter(
+            Q(title__icontains=query) | 
+            Q(description__icontains=query),
+            user=request.user
+        )
+    else:
+        items = LearningItem.objects.none()
+    return render(request, 'core/search_results.html', {'items': items, 'query': query})
+
 @login_required
 def stats_view(request):
     items = LearningItem.objects.filter(user=request.user)
     reviews = Review.objects.filter(learning_item__user=request.user)
     total_items = items.count()
 
-    # Calculate average rating manually
-    avg_rating = 0
-    if reviews.exists():
-        total_rating = sum(review.performance_rating for review in reviews)
-        avg_rating = total_rating / reviews.count()
-
     # Calculate statistics
     stats = {
         'total_items': total_items,
         'total_reviews': reviews.count(),
-        'avg_rating': round(avg_rating, 1),
         
         # Items by type with percentages
         'items_by_type': {
@@ -213,30 +203,6 @@ def stats_view(request):
     }
     
     return render(request, 'core/stats.html', {'stats': stats})
-
-@login_required
-def delete_item(request, pk):
-    item = get_object_or_404(LearningItem, pk=pk, user=request.user)
-    if request.method == 'POST':
-        item.delete()
-        messages.success(request, 'Item deleted successfully.')
-        return redirect('core:dashboard')
-    return render(request, 'core/delete_confirm.html', {'item': item})
-
-@login_required
-def edit_item(request, pk):
-    item = get_object_or_404(LearningItem, pk=pk, user=request.user)
-    if request.method == 'POST':
-        form = LearningItemForm(request.POST, request.FILES, instance=item)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Item updated successfully!')
-            return redirect('core:item_detail', pk=pk)
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        form = LearningItemForm(instance=item)
-    return render(request, 'core/edit_item.html', {'form': form, 'item': item})
 
 @login_required
 def profile(request):

@@ -19,6 +19,8 @@
         
         <div class="action-buttons">
             <a href="{% url 'core:review_item' item.pk %}" class="btn btn-primary">Review Now</a>
+            <a href="{% url 'core:edit_item' item.pk %}" class="btn btn-primary">Edit</a>
+            <a href="{% url 'core:delete_item' item.pk %}" class="btn btn-danger">Delete</a>
             <button class="btn btn-secondary" onclick="history.back()">Go Back</button>
         </div>
     </div>

@@ -40,15 +40,32 @@ class LearningItem(models.Model):
         }[self.difficulty]
     
     def calculate_next_review(self):
-        base_strength = 24  # base strength in hours
-        difficulty_mod = self.get_difficulty_modifier()
-        review_mod = 1 + math.log(self.review_count + 1)
+        last_review = self.review_set.order_by('-review_date').first()
         
-        strength = base_strength * difficulty_mod * review_mod
-        target_retention = 0.7  # 70% retention target
+        if not last_review:
+            # If never reviewed, set next review to today
+            return timezone.now()
         
-        hours_until_review = -math.log(target_retention) * strength
-        return self.last_review + timedelta(hours=hours_until_review)
+        last_review_date = last_review.review_date
+        if not last_review_date.tzinfo:
+            last_review_date = timezone.make_aware(last_review_date)
+            
+        # Calculate next review based on spaced repetition
+        days_to_add = 1  # Default to 1 day
+        review_count = self.review_set.count()
+        
+        if review_count == 1:
+            days_to_add = 3
+        elif review_count == 2:
+            days_to_add = 7
+        elif review_count == 3:
+            days_to_add = 14
+        elif review_count == 4:
+            days_to_add = 30
+        else:
+            days_to_add = 60
+            
+        return last_review_date + timezone.timedelta(days=days_to_add)
 
     def get_review_status(self):
         next_review = self.calculate_next_review()
