@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 import math
+from django.utils import timezone
 
 class LearningItem(models.Model):
     ITEM_TYPES = (
@@ -48,6 +49,27 @@ class LearningItem(models.Model):
         
         hours_until_review = -math.log(target_retention) * strength
         return self.last_review + timedelta(hours=hours_until_review)
+
+    def get_review_status(self):
+        next_review = self.calculate_next_review()
+        current_time = timezone.now()
+        
+        if not next_review:
+            return {
+                'status': 'new',
+                'message': 'Not reviewed yet'
+            }
+        elif current_time < next_review:
+            return {
+                'status': 'upcoming',
+                'message': f'Due on {next_review.strftime("%b %d, %Y")}'
+            }
+        else:
+            days_overdue = (current_time - next_review).days
+            return {
+                'status': 'overdue',
+                'message': f'Overdue by {days_overdue} days'
+            }
 
 class Review(models.Model):
     learning_item = models.ForeignKey(LearningItem, on_delete=models.CASCADE)
