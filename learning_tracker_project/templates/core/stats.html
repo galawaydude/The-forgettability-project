@@ -1,6 +1,4 @@
 {% extends 'base.html' %}
-{% load mathfilters %}
-
 {% block title %}Learning Statistics{% endblock %}
 
 {% block content %}
@@ -17,12 +15,6 @@
             <h3>Total Reviews</h3>
             <div class="stat-value">{{ stats.total_reviews }}</div>
         </div>
-        <div class="stat-card">
-            <h3>Average Rating</h3>
-            <div class="stat-value">
-                {{ stats.avg_rating|default:0|floatformat:1 }}/5
-            </div>
-        </div>
     </div>
 
     <!-- Distribution Charts -->
@@ -34,19 +26,15 @@
                 {% if stats.total_items > 0 %}
                     <div class="chart-bar">
                         <div class="bar-label">Questions</div>
-                        {% with percentage=stats.items_by_type.Questions|div:stats.total_items|multiply:100 %}
-                        <div class="bar" {% if percentage %}style="width: {{ percentage }}%"{% else %}style="width: 0%"{% endif %}>
-                            {{ stats.items_by_type.Questions }}
+                        <div class="bar" style="width: {{ stats.items_by_type.Questions.percentage }}%">
+                            {{ stats.items_by_type.Questions.count }}
                         </div>
-                        {% endwith %}
                     </div>
                     <div class="chart-bar">
                         <div class="bar-label">Concepts</div>
-                        {% with percentage=stats.items_by_type.Concepts|div:stats.total_items|multiply:100 %}
-                        <div class="bar" {% if percentage %}style="width: {{ percentage }}%"{% else %}style="width: 0%"{% endif %}>
-                            {{ stats.items_by_type.Concepts }}
+                        <div class="bar" style="width: {{ stats.items_by_type.Concepts.percentage }}%">
+                            {{ stats.items_by_type.Concepts.count }}
                         </div>
-                        {% endwith %}
                     </div>
                 {% else %}
                     <p class="text-muted">No items added yet</p>
@@ -61,27 +49,21 @@
                 {% if stats.total_items > 0 %}
                     <div class="chart-bar">
                         <div class="bar-label">Easy</div>
-                        {% with percentage=stats.items_by_difficulty.Easy|div:stats.total_items|multiply:100 %}
-                        <div class="bar bar-easy" {% if percentage %}style="width: {{ percentage }}%"{% else %}style="width: 0%"{% endif %}>
-                            {{ stats.items_by_difficulty.Easy }}
+                        <div class="bar bar-easy" style="width: {{ stats.items_by_difficulty.Easy.percentage }}%">
+                            {{ stats.items_by_difficulty.Easy.count }}
                         </div>
-                        {% endwith %}
                     </div>
                     <div class="chart-bar">
                         <div class="bar-label">Medium</div>
-                        {% with percentage=stats.items_by_difficulty.Medium|div:stats.total_items|multiply:100 %}
-                        <div class="bar bar-medium" {% if percentage %}style="width: {{ percentage }}%"{% else %}style="width: 0%"{% endif %}>
-                            {{ stats.items_by_difficulty.Medium }}
+                        <div class="bar bar-medium" style="width: {{ stats.items_by_difficulty.Medium.percentage }}%">
+                            {{ stats.items_by_difficulty.Medium.count }}
                         </div>
-                        {% endwith %}
                     </div>
                     <div class="chart-bar">
                         <div class="bar-label">Hard</div>
-                        {% with percentage=stats.items_by_difficulty.Hard|div:stats.total_items|multiply:100 %}
-                        <div class="bar bar-hard" {% if percentage %}style="width: {{ percentage }}%"{% else %}style="width: 0%"{% endif %}>
-                            {{ stats.items_by_difficulty.Hard }}
+                        <div class="bar bar-hard" style="width: {{ stats.items_by_difficulty.Hard.percentage }}%">
+                            {{ stats.items_by_difficulty.Hard.count }}
                         </div>
-                        {% endwith %}
                     </div>
                 {% else %}
                     <p class="text-muted">No items added yet</p>
@@ -104,9 +86,6 @@
                             <span class="activity-date">
                                 {{ review.review_date|date:"M d, Y" }}
                             </span>
-                        </div>
-                        <div class="activity-rating">
-                            Rating: {{ review.performance_rating }}/5
                         </div>
                         {% if review.notes %}
                             <div class="activity-notes">
@@ -240,11 +219,6 @@
     font-size: 0.9em;
 }
 
-.activity-rating {
-    color: #666;
-    margin-bottom: 5px;
-}
-
 .activity-notes {
     margin-top: 10px;
     color: #666;
@@ -267,6 +241,10 @@
     .stat-value {
         font-size: 2em;
     }
+}
+
+.bar[data-width] {
+    width: attr(data-width percentage);
 }
 </style>
 {% endblock %}

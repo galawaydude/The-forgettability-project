@@ -60,9 +60,9 @@
             </form>
         </div>
 
-        <!-- Statistics -->
-        <div class="profile-card stats-card">
-            <h2>Your Statistics</h2>
+        <!-- Account Statistics -->
+        <div class="profile-card">
+            <h2>Account Statistics</h2>
             <div class="stats-grid">
                 <div class="stat-item">
                     <div class="stat-value">{{ total_items }}</div>
@@ -72,14 +72,10 @@
                     <div class="stat-value">{{ total_reviews }}</div>
                     <div class="stat-label">Total Reviews</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ avg_rating|default:0|floatformat:1 }}</div>
-                    <div class="stat-label">Average Rating</div>
-                </div>
             </div>
             <div class="account-info">
-                <p><strong>Member since:</strong> {{ join_date|date:"M d, Y" }}</p>
-                <p><strong>Last login:</strong> {{ last_login|date:"M d, Y H:i" }}</p>
+                <p>Member since: {{ join_date|date:"M d, Y" }}</p>
+                <p>Last login: {{ last_login|date:"M d, Y H:i" }}</p>
             </div>
         </div>
     </div>

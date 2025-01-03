@@ -162,27 +162,54 @@ def search_items(request):
         'items': items,
         'total_results': len(items) if isinstance(items, list) else items.count()
     })
-
 @login_required
 def stats_view(request):
     items = LearningItem.objects.filter(user=request.user)
     reviews = Review.objects.filter(learning_item__user=request.user)
-    
+    total_items = items.count()
+
+    # Calculate average rating manually
+    avg_rating = 0
+    if reviews.exists():
+        total_rating = sum(review.performance_rating for review in reviews)
+        avg_rating = total_rating / reviews.count()
+
     # Calculate statistics
     stats = {
-        'total_items': items.count(),
+        'total_items': total_items,
         'total_reviews': reviews.count(),
+        'avg_rating': round(avg_rating, 1),
+        
+        # Items by type with percentages
         'items_by_type': {
-            'Questions': items.filter(item_type='Q').count(),
-            'Concepts': items.filter(item_type='C').count()
+            'Questions': {
+                'count': items.filter(item_type='Q').count(),
+                'percentage': (items.filter(item_type='Q').count() / total_items * 100) if total_items > 0 else 0
+            },
+            'Concepts': {
+                'count': items.filter(item_type='C').count(),
+                'percentage': (items.filter(item_type='C').count() / total_items * 100) if total_items > 0 else 0
+            }
         },
+        
+        # Items by difficulty with percentages
         'items_by_difficulty': {
-            'Easy': items.filter(difficulty='E').count(),
-            'Medium': items.filter(difficulty='M').count(),
-            'Hard': items.filter(difficulty='H').count()
+            'Easy': {
+                'count': items.filter(difficulty='E').count(),
+                'percentage': (items.filter(difficulty='E').count() / total_items * 100) if total_items > 0 else 0
+            },
+            'Medium': {
+                'count': items.filter(difficulty='M').count(),
+                'percentage': (items.filter(difficulty='M').count() / total_items * 100) if total_items > 0 else 0
+            },
+            'Hard': {
+                'count': items.filter(difficulty='H').count(),
+                'percentage': (items.filter(difficulty='H').count() / total_items * 100) if total_items > 0 else 0
+            }
         },
-        'recent_reviews': reviews.order_by('-review_date')[:10],
-        'avg_rating': reviews.aggregate(Avg('performance_rating'))['performance_rating__avg']
+        
+        # Recent reviews
+        'recent_reviews': reviews.select_related('learning_item').order_by('-review_date')[:5]
     }
     
     return render(request, 'core/stats.html', {'stats': stats})
@@ -241,7 +268,6 @@ def profile(request):
     context = {
         'total_items': items.count(),
         'total_reviews': reviews.count(),
-        'avg_rating': reviews.aggregate(Avg('rating'))['rating__avg'],
         'join_date': request.user.date_joined,
         'last_login': request.user.last_login,
     }
