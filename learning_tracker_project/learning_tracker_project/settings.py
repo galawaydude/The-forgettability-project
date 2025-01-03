@@ -143,4 +143,7 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'  # Use your timezone
-
+# Add these lines to your settings.py
+LOGIN_URL = 'core:login'  # Use the login URL name from your core.urls
+LOGIN_REDIRECT_URL = 'core:dashboard'  # After successful login
+LOGOUT_REDIRECT_URL = 'core:login'  # After logout
