@@ -149,15 +149,21 @@ def review_item(request, pk):
 @login_required
 def search_items(request):
     query = request.GET.get('q', '')
+    # Show all items by default
+    items = LearningItem.objects.filter(user=request.user).order_by('-created_at')
+    
+    # Filter items if there's a search query
     if query:
-        items = LearningItem.objects.filter(
+        items = items.filter(
             Q(title__icontains=query) | 
-            Q(description__icontains=query),
-            user=request.user
+            Q(description__icontains=query)
         )
-    else:
-        items = LearningItem.objects.none()
-    return render(request, 'core/search_results.html', {'items': items, 'query': query})
+    
+    return render(request, 'core/search_results.html', {
+        'items': items,
+        'query': query,
+        'total_items': items.count()
+    })
 
 @login_required
 def stats_view(request):
